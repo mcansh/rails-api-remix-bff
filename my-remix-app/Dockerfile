@@ -7,7 +7,7 @@ ENV NODE_ENV production
 # Install all node_modules, including dev dependencies
 FROM base as deps
 
-WORKDIR /myapp
+WORKDIR /remix
 
 ADD package.json ./
 RUN npm install --production=false
@@ -15,18 +15,18 @@ RUN npm install --production=false
 # Setup production node_modules
 FROM base as production-deps
 
-WORKDIR /myapp
+WORKDIR /remix
 
-COPY --from=deps /myapp/node_modules /myapp/node_modules
+COPY --from=deps /remix/node_modules /remix/node_modules
 ADD package.json ./
 RUN npm prune --production
 
 # Build the app
 FROM base as build
 
-WORKDIR /myapp
+WORKDIR /remix
 
-COPY --from=deps /myapp/node_modules /myapp/node_modules
+COPY --from=deps /remix/node_modules /remix/node_modules
 
 ADD . .
 RUN npm run build
@@ -34,12 +34,13 @@ RUN npm run build
 # Finally, build the production image with minimal footprint
 FROM base
 
-WORKDIR /myapp
+WORKDIR /remix
 
-COPY --from=production-deps /myapp/node_modules /myapp/node_modules
+COPY --from=production-deps /remix/node_modules /remix/node_modules
 
-COPY --from=build /myapp/build /myapp/build
-COPY --from=build /myapp/public /myapp/public
+COPY --from=build /remix/build /remix/build
+COPY --from=build /remix/public /remix/public
 ADD . .
 
+EXPOSE 3000
 CMD ["npm", "start"]
